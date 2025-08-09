@@ -41,6 +41,7 @@ model Student {
   classroomId Int
   goals       StudentGoal[]
   notes       Note[]
+  groups      Group[]   @relation("GroupStudents")
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -79,6 +80,7 @@ model Group {
   id        Int       @id @default(autoincrement())
   name      String
   sessions  Session[]
+  students  Student[] @relation("GroupStudents")
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }
@@ -92,6 +94,7 @@ model Session {
   group     Group?   @relation(fields: [groupId], references: [id])
   groupId   Int?
   notes     Note[]
+  status    String @default("UPCOMING")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
