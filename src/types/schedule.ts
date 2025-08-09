@@ -1,4 +1,4 @@
-import { Session, Group, Student } from '@prisma/client'
+import type { Session, Group, Student } from '@prisma/client'
 
 export type SessionStatus = 'UPCOMING' | 'SEEN' | 'MISSED'
 

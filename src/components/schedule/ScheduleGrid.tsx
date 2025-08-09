@@ -4,7 +4,7 @@ import { useState, useTransition, Fragment } from 'react'
 import { addDays } from '@/utils/date'
 import { getSessionsForRange } from '@/app/schedule/actions'
 import ScheduleBlock from './ScheduleBlock'
-import { Student } from '@prisma/client'
+import type { Student } from '@prisma/client'
 import { SessionWithGroup } from '@/types/schedule'
 
 interface Props {
