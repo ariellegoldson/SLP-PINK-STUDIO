@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import type { Teacher, Classroom, Student } from '@prisma/client'
+import type { Teacher, Classroom, Student, SessionTemplate } from '@prisma/client'
 import NoteFormModal from '../notes/NoteFormModal'
 import { SessionWithGroup, SessionStatus, SESSION_STATUSES } from '@/types/schedule'
+
+type TemplateWithStudents = SessionTemplate & { students: { studentId: number }[] }
 
 interface Props {
   initialDate: Date
@@ -52,6 +54,7 @@ export default function SessionModal({
   )
   const [classrooms, setClassrooms] = useState<Classroom[]>([])
   const [students, setStudents] = useState<Student[]>([])
+  const [templates, setTemplates] = useState<TemplateWithStudents[]>([])
   const [selected, setSelected] = useState<number[]>(
     session?.group?.students.map((s) => s.id) || []
   )
@@ -60,6 +63,17 @@ export default function SessionModal({
   const [saving, setSaving] = useState(false)
   const [applyAll, setApplyAll] = useState(session?.group ? true : false)
   const [noteIndex, setNoteIndex] = useState<number | null>(null)
+
+  useEffect(() => {
+    async function loadTemplates() {
+      const res = await fetch('/api/templates')
+      if (res.ok) {
+        const data = await res.json()
+        setTemplates(data)
+      }
+    }
+    loadTemplates()
+  }, [])
 
   useEffect(() => {
     async function loadClassrooms() {
@@ -145,6 +159,53 @@ export default function SessionModal({
     setSelected([])
   }
 
+  function handleTemplate(id: number) {
+    const tpl = templates.find((t) => t.id === id)
+    if (!tpl) return
+    if (tpl.teacherId) setTeacherId(tpl.teacherId)
+    if (tpl.classroomId) setClassroomId(tpl.classroomId)
+    setLocation(tpl.location)
+    setActivity(tpl.defaultActivity || '')
+    setSelected(tpl.students.map((s) => s.studentId))
+    if (tpl.durationMinutes) {
+      const [h, m] = startTime.split(':').map(Number)
+      const start = new Date()
+      start.setHours(h, m, 0, 0)
+      const end = new Date(start.getTime() + tpl.durationMinutes * 60000)
+      setEndTime(
+        end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+      )
+    }
+  }
+
+  function calcDuration(start: string, end: string) {
+    const s = new Date(`1970-01-01T${start}:00`)
+    const e = new Date(`1970-01-01T${end}:00`)
+    return Math.max(0, Math.round((e.getTime() - s.getTime()) / 60000))
+  }
+
+  async function handleSaveTemplate() {
+    const name = prompt('Template name?')
+    if (!name) return
+    const res = await fetch('/api/templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        teacherId,
+        classroomId,
+        location,
+        durationMinutes: calcDuration(startTime, endTime),
+        defaultActivity: activity,
+        studentIds: selected,
+      }),
+    })
+    if (res.ok) {
+      const tpl = await res.json()
+      setTemplates((prev) => [tpl, ...prev])
+    }
+  }
+
   async function markAllSeen() {
     if (!session?.groupId || !session.group) return
     const res = await fetch(`/api/groups/${session.groupId}/mark-seen`, {
@@ -207,6 +268,21 @@ export default function SessionModal({
             </label>
           </div>
         )}
+        <div className="mb-2">
+          <label className="block text-sm text-pink-800">Apply Template</label>
+          <select
+            className="mt-1 w-full rounded border-pink-300 bg-pink-100 p-1"
+            defaultValue=""
+            onChange={(e) => handleTemplate(Number(e.target.value))}
+          >
+            <option value="">Select</option>
+            {templates.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="mb-2">
           <label className="block text-sm text-pink-800">Date</label>
           <input
@@ -338,6 +414,13 @@ export default function SessionModal({
           </select>
         </div>
           <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              className="rounded bg-pink-200 px-3 py-1 text-pink-900"
+              onClick={handleSaveTemplate}
+            >
+              Save as Template
+            </button>
             <button
               type="button"
               className="rounded bg-pink-200 px-3 py-1 text-pink-900"
