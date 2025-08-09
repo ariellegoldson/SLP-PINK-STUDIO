@@ -1,4 +1,5 @@
 import ScheduleGrid from '@/components/schedule/ScheduleGrid'
+import NoteFormModal from '@/components/notes/NoteFormModal'
 import prisma from '@/lib/prisma'
 
 function startOfCurrentWeek() {
@@ -16,6 +17,8 @@ export default async function SchedulePage() {
     orderBy: { startTime: 'asc' },
   })
   const students = await prisma.student.findMany({ orderBy: { firstName: 'asc' } })
+  const sessionForNote = sessions[0]
+  const studentForNote = sessionForNote?.group?.students[0] || students[0]
   return (
     <section className="rounded-md bg-white p-2 shadow">
       <h2 className="mb-4 text-xl font-semibold">Schedule</h2>
@@ -24,6 +27,11 @@ export default async function SchedulePage() {
         initialSessions={sessions as any}
         students={students}
       />
+      {sessionForNote && studentForNote && (
+        <div className="mt-4">
+          <NoteFormModal student={studentForNote} session={sessionForNote as any} />
+        </div>
+      )}
     </section>
   )
 }
