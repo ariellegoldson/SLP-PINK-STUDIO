@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Student } from '@prisma/client'
 import { SessionWithGroup } from '@/types/schedule'
 
@@ -25,6 +25,8 @@ export default function NoteFormModal({
 }: NoteFormModalProps) {
   const [internalOpen, setInternalOpen] = useState(false)
   const [text, setText] = useState('')
+  const [lastNote, setLastNote] = useState<any | null>(null)
+  const [editingNote, setEditingNote] = useState<any | null>(null)
   const isControlled = controlledOpen !== undefined
   const open = isControlled ? controlledOpen : internalOpen
 
@@ -33,29 +35,64 @@ export default function NoteFormModal({
     onClose?.()
   }
 
+  useEffect(() => {
+    async function loadLast() {
+      const res = await fetch(`/api/notes?studentId=${student.id}&sessionId=${session.id}`)
+      const data = await res.json()
+      if (data) setLastNote(data)
+    }
+    loadLast()
+  }, [student.id, session.id])
+
   async function handleSave() {
-    await fetch('/api/notes', {
+    const payload: any = {
+      text,
+      sessionId: session.id,
+      studentId: student.id,
+    }
+    if (editingNote) payload.noteId = editingNote.id
+    const res = await fetch('/api/notes', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text,
-        sessionId: session.id,
-        studentId: student.id,
-      }),
+      body: JSON.stringify(payload),
     })
+    const saved = await res.json()
+    setLastNote(saved)
+    setEditingNote(null)
     onSave?.()
     close()
+  }
+
+  function startEditLast() {
+    if (!lastNote) return
+    setEditingNote(lastNote)
+    setText(lastNote.text)
+    if (!isControlled) setInternalOpen(true)
   }
 
   return (
     <>
       {!isControlled && (
-        <button
-          onClick={() => setInternalOpen(true)}
-          className="rounded bg-pink-200 px-2 py-1 text-pink-900"
-        >
-          Add Note
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              setEditingNote(null)
+              setText('')
+              setInternalOpen(true)
+            }}
+            className="rounded bg-pink-200 px-2 py-1 text-pink-900"
+          >
+            Add Note
+          </button>
+          {lastNote && (
+            <button
+              onClick={startEditLast}
+              className="text-xs text-pink-700 underline"
+            >
+              Edit Last Note
+            </button>
+          )}
+        </div>
       )}
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
@@ -66,9 +103,14 @@ export default function NoteFormModal({
               </div>
             )}
             <h2 className="mb-2 text-lg font-semibold text-pink-800">
-              Add Note for {student.firstName} {student.lastName}
+              {editingNote ? 'Edit' : 'Add'} Note for {student.firstName} {student.lastName}
             </h2>
             <p className="mb-2">Session: {session.group?.name || 'Session'}</p>
+            {editingNote && (
+              <p className="mb-2 text-xs text-pink-800">
+                Last saved: {new Date(editingNote.updatedAt).toLocaleString()}
+              </p>
+            )}
             <textarea
               className="w-full rounded border border-pink-300 bg-pink-100 p-1"
               rows={4}
