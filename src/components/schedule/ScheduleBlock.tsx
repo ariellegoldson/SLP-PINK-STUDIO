@@ -2,18 +2,18 @@
 
 import { useState } from 'react'
 import SessionModal from './SessionModal'
-import type { Student } from '@prisma/client'
+import type { Teacher } from '@prisma/client'
 import { SessionWithGroup } from '@/types/schedule'
 
 interface Props {
   date: Date
   time: string
   session?: SessionWithGroup
-  students: Student[]
+  teachers: Teacher[]
   onChange: (session: SessionWithGroup) => void
 }
 
-export default function ScheduleBlock({ date, time, session, students, onChange }: Props) {
+export default function ScheduleBlock({ date, time, session, teachers, onChange }: Props) {
   const [open, setOpen] = useState(false)
 
   const status = session?.status ?? 'UPCOMING'
@@ -44,7 +44,7 @@ export default function ScheduleBlock({ date, time, session, students, onChange 
           initialDate={date}
           initialTime={time}
           session={session}
-          students={students}
+          teachers={teachers}
           onClose={() => setOpen(false)}
           onSave={(s) => {
             onChange(s)

@@ -16,6 +16,7 @@ export default async function SchedulePage() {
     include: { group: { include: { students: true } } },
     orderBy: { startTime: 'asc' },
   })
+  const teachers = await prisma.teacher.findMany({ orderBy: { name: 'asc' } })
   const students = await prisma.student.findMany({ orderBy: { firstName: 'asc' } })
   const sessionForNote = sessions[0]
   const studentForNote = sessionForNote?.group?.students[0] || students[0]
@@ -25,7 +26,7 @@ export default async function SchedulePage() {
       <ScheduleGrid
         initialWeekStart={weekStart}
         initialSessions={sessions as any}
-        students={students}
+        teachers={teachers}
       />
       {sessionForNote && studentForNote && (
         <div className="mt-4">

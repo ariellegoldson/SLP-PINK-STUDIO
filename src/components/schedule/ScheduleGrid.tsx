@@ -4,13 +4,13 @@ import { useState, useTransition, Fragment } from 'react'
 import { addDays } from '@/utils/date'
 import { getSessionsForRange } from '@/app/schedule/actions'
 import ScheduleBlock from './ScheduleBlock'
-import type { Student } from '@prisma/client'
+import type { Teacher } from '@prisma/client'
 import { SessionWithGroup } from '@/types/schedule'
 
 interface Props {
   initialWeekStart: Date
   initialSessions: SessionWithGroup[]
-  students: Student[]
+  teachers: Teacher[]
 }
 
 const times = Array.from({ length: 8 }, (_, i) => `${8 + i}:00`)
@@ -19,7 +19,7 @@ const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 export default function ScheduleGrid({
   initialWeekStart,
   initialSessions,
-  students,
+  teachers,
 }: Props) {
   const [weekStart, setWeekStart] = useState(new Date(initialWeekStart))
   const [sessions, setSessions] = useState<SessionWithGroup[]>(initialSessions)
@@ -98,7 +98,7 @@ export default function ScheduleGrid({
                   date={date}
                   time={t}
                   session={session}
-                  students={students}
+                  teachers={teachers}
                   onChange={upsertSession}
                 />
               )

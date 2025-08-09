@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import type { Student } from '@prisma/client'
+import { useState, useEffect } from 'react'
+import type { Teacher, Classroom, Student } from '@prisma/client'
 import { saveSession } from '@/app/schedule/actions'
 import { SessionWithGroup, SessionStatus, SESSION_STATUSES } from '@/types/schedule'
 
@@ -9,7 +9,7 @@ interface Props {
   initialDate: Date
   initialTime: string
   session?: SessionWithGroup
-  students: Student[]
+  teachers: Teacher[]
   onClose: () => void
   onSave: (session: SessionWithGroup) => void
 }
@@ -21,7 +21,7 @@ export default function SessionModal({
   initialDate,
   initialTime,
   session,
-  students,
+  teachers,
   onClose,
   onSave,
 }: Props) {
@@ -43,12 +43,48 @@ export default function SessionModal({
       : times[times.indexOf(initialTime) + 1] || initialTime
   )
   const [location, setLocation] = useState(session?.location || '')
+  const [teacherId, setTeacherId] = useState<number | undefined>(
+    session?.group?.students[0]?.teacherId
+  )
+  const [classroomId, setClassroomId] = useState<number | undefined>(
+    session?.group?.students[0]?.classroomId
+  )
+  const [classrooms, setClassrooms] = useState<Classroom[]>([])
+  const [students, setStudents] = useState<Student[]>([])
   const [selected, setSelected] = useState<number[]>(
     session?.group?.students.map((s) => s.id) || []
   )
   const [groupName, setGroupName] = useState(session?.group?.name || '')
   const [status, setStatus] = useState<SessionStatus>(session?.status || 'UPCOMING')
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    async function loadClassrooms() {
+      if (teacherId) {
+        const res = await fetch(`/api/classrooms?teacherId=${teacherId}`)
+        const data = await res.json()
+        setClassrooms(data)
+      } else {
+        setClassrooms([])
+      }
+    }
+    loadClassrooms()
+  }, [teacherId])
+
+  useEffect(() => {
+    async function loadStudents() {
+      if (teacherId && classroomId) {
+        const res = await fetch(
+          `/api/students?teacherId=${teacherId}&classroomId=${classroomId}`,
+        )
+        const data = await res.json()
+        setStudents(data)
+      } else {
+        setStudents([])
+      }
+    }
+    loadStudents()
+  }, [teacherId, classroomId])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -70,6 +106,17 @@ export default function SessionModal({
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
     )
+  }
+
+  function handleTeacherChange(id: number) {
+    setTeacherId(id)
+    setClassroomId(undefined)
+    setSelected([])
+  }
+
+  function handleClassroomChange(id: number) {
+    setClassroomId(id)
+    setSelected([])
   }
 
   return (
@@ -126,6 +173,37 @@ export default function SessionModal({
             <option value="">Select</option>
             {locations.map((l) => (
               <option key={l}>{l}</option>
+            ))}
+          </select>
+        </div>
+        <div className="mb-2">
+          <label className="block text-sm text-pink-800">Teacher</label>
+          <select
+            className="mt-1 w-full rounded border-pink-300 bg-pink-100 p-1"
+            value={teacherId ?? ''}
+            onChange={(e) => handleTeacherChange(Number(e.target.value))}
+          >
+            <option value="">Select</option>
+            {teachers.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="mb-2">
+          <label className="block text-sm text-pink-800">Classroom</label>
+          <select
+            className="mt-1 w-full rounded border-pink-300 bg-pink-100 p-1"
+            value={classroomId ?? ''}
+            onChange={(e) => handleClassroomChange(Number(e.target.value))}
+            disabled={!teacherId}
+          >
+            <option value="">Select</option>
+            {classrooms.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
             ))}
           </select>
         </div>
