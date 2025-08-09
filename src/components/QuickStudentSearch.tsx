@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Dialog } from '@headlessui/react'
 
@@ -21,6 +21,7 @@ export default function QuickStudentSearch() {
   const [open, setOpen] = useState(false)
   const [overlay, setOverlay] = useState<Result | null>(null)
   const router = useRouter()
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!query) {
@@ -45,6 +46,17 @@ export default function QuickStudentSearch() {
     return () => clearTimeout(handle)
   }, [query])
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        inputRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   const activeId = results[active] ? `student-option-${results[active].id}` : undefined
 
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -63,13 +75,14 @@ export default function QuickStudentSearch() {
   return (
     <div className="relative">
       <input
+        ref={inputRef}
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onFocus={() => results.length && setOpen(true)}
         onKeyDown={onKeyDown}
         placeholder="Search students"
-        className="w-48 rounded-md border border-primary px-2 py-1 text-sm text-pink-900 placeholder-pink-300"
+        className="w-48 rounded-2xl border border-pink-600 px-2 py-1 text-sm text-text placeholder-pink-300 focus:outline-none focus:ring-2 focus:ring-pink-600"
         aria-controls="student-search-results"
         aria-expanded={open}
         aria-activedescendant={activeId}

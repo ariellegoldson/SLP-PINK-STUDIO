@@ -1,0 +1,21 @@
+:root {
+  --pink: #f5bcd6;
+  --pink-600: #e09cbf;
+  --text: #374151;
+  --bg-start: #fff7fb;
+  --bg-end: #ffeef6;
+}
+
+body {
+  color: var(--text);
+  background: radial-gradient(circle at top center, var(--bg-start), var(--bg-end));
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up {
+  animation: fade-up 0.3s ease-out;
+}

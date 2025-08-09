@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import type { Teacher, Classroom, Student, SessionTemplate } from '@prisma/client'
 import NoteFormModal from '../notes/NoteFormModal'
 import { SessionWithGroup, SessionStatus, SESSION_STATUSES } from '@/types/schedule'
+import { getDefaultSlotTimes } from '@/lib/time'
 
 type TemplateWithStudents = SessionTemplate & { students: { studentId: number }[] }
 
@@ -30,6 +31,11 @@ export default function SessionModal({
   const [date, setDate] = useState(
     session ? session.date.toISOString().substring(0, 10) : initialDate.toISOString().substring(0, 10)
   )
+  const defaults = getDefaultSlotTimes({
+    hour: parseInt(initialTime.split(':')[0]),
+    minute: parseInt(initialTime.split(':')[1] || '0'),
+    slotMinutes: 30,
+  })
   const [startTime, setStartTime] = useState(
     session
       ? new Date(session.startTime).toLocaleTimeString([], {
@@ -37,12 +43,16 @@ export default function SessionModal({
           minute: '2-digit',
           hour12: false,
         })
-      : initialTime
+      : defaults.startTime
   )
   const [endTime, setEndTime] = useState(
     session
-      ? new Date(session.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
-      : times[times.indexOf(initialTime) + 1] || initialTime
+      ? new Date(session.endTime).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        })
+      : defaults.endTime
   )
   const [location, setLocation] = useState(session?.location || '')
   const [activity, setActivity] = useState(session?.activity || '')
@@ -106,6 +116,11 @@ export default function SessionModal({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
+    if (!startTime || !endTime) {
+      alert('Start and end times are required')
+      setSaving(false)
+      return
+    }
     let res
     if (session) {
       res = await fetch(`/api/sessions/${session.id}`, {
