@@ -11,9 +11,17 @@ interface Props {
   session?: SessionWithGroup
   teachers: Teacher[]
   onChange: (session: SessionWithGroup) => void
+  highlightStudentId?: number
 }
 
-export default function ScheduleBlock({ date, time, session, teachers, onChange }: Props) {
+export default function ScheduleBlock({
+  date,
+  time,
+  session,
+  teachers,
+  onChange,
+  highlightStudentId,
+}: Props) {
   const [open, setOpen] = useState(false)
 
   const status = session?.status ?? 'UPCOMING'
@@ -25,11 +33,15 @@ export default function ScheduleBlock({ date, time, session, teachers, onChange 
       : session
       ? 'bg-[#f5bcd6]'
       : ''
+  const highlight =
+    highlightStudentId && session?.group?.students.some((s) => s.id === highlightStudentId)
 
   return (
     <>
       <div
-        className={`h-16 w-full border p-1 text-xs cursor-pointer ${color}`}
+        className={`h-16 w-full cursor-pointer border p-1 text-xs ${color} ${
+          highlight ? 'ring-2 ring-primary' : ''
+        }`}
         onClick={() => setOpen(true)}
       >
         {session && (

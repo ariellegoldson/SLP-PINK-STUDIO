@@ -1,6 +1,7 @@
 import './globals.css'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
+import QuickStudentSearch from '@/components/QuickStudentSearch'
 
 export const metadata = {
   title: 'SLP Pink Studio',
@@ -11,7 +12,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className="flex min-h-screen bg-gray-50">
-        <nav className="w-64 bg-primary text-white p-4 rounded-r-md">
+        <nav className="w-64 rounded-r-md bg-primary p-4 text-white">
           <h1 className="mb-8 text-2xl font-semibold">SLP Pink Studio</h1>
           <ul className="space-y-2">
             <li>
@@ -31,7 +32,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             </li>
           </ul>
         </nav>
-        <main className="flex-1 p-8">{children}</main>
+        <div className="flex flex-1 flex-col p-8">
+          <header className="mb-4 flex justify-end">
+            <QuickStudentSearch />
+          </header>
+          <main className="flex-1">{children}</main>
+        </div>
       </body>
     </html>
   )
