@@ -9,7 +9,11 @@ function startOfCurrentWeek() {
   return new Date(now.getFullYear(), now.getMonth(), diff)
 }
 
-export default async function SchedulePage() {
+export default async function SchedulePage({
+  searchParams,
+}: {
+  searchParams: { studentId?: string }
+}) {
   const weekStart = startOfCurrentWeek()
   const sessions = await prisma.session.findMany({
     where: { date: { gte: weekStart, lt: new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000) } },
@@ -20,6 +24,7 @@ export default async function SchedulePage() {
   const students = await prisma.student.findMany({ orderBy: { firstName: 'asc' } })
   const sessionForNote = sessions[0]
   const studentForNote = sessionForNote?.group?.students[0] || students[0]
+  const highlightStudentId = searchParams.studentId ? Number(searchParams.studentId) : undefined
   return (
     <section className="rounded-md bg-white p-2 shadow">
       <h2 className="mb-4 text-xl font-semibold">Schedule</h2>
@@ -27,6 +32,7 @@ export default async function SchedulePage() {
         initialWeekStart={weekStart}
         initialSessions={sessions as any}
         teachers={teachers}
+        highlightStudentId={highlightStudentId}
       />
       {sessionForNote && studentForNote && (
         <div className="mt-4">

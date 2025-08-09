@@ -11,6 +11,7 @@ interface Props {
   initialWeekStart: Date
   initialSessions: SessionWithGroup[]
   teachers: Teacher[]
+  highlightStudentId?: number
 }
 
 const times = Array.from({ length: 8 }, (_, i) => `${8 + i}:00`)
@@ -20,6 +21,7 @@ export default function ScheduleGrid({
   initialWeekStart,
   initialSessions,
   teachers,
+  highlightStudentId,
 }: Props) {
   const [weekStart, setWeekStart] = useState(new Date(initialWeekStart))
   const [sessions, setSessions] = useState<SessionWithGroup[]>(initialSessions)
@@ -100,6 +102,7 @@ export default function ScheduleGrid({
                   session={session}
                   teachers={teachers}
                   onChange={upsertSession}
+                  highlightStudentId={highlightStudentId}
                 />
               )
             })}
