@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Student } from '@prisma/client'
+import type { Student } from '@prisma/client'
 import { saveSession } from '@/app/schedule/actions'
 import { SessionWithGroup, SessionStatus, SESSION_STATUSES } from '@/types/schedule'
 

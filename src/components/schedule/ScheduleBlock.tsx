@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import SessionModal from './SessionModal'
-import { Student } from '@prisma/client'
+import type { Student } from '@prisma/client'
 import { SessionWithGroup } from '@/types/schedule'
 
 interface Props {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Student } from '@prisma/client'
+import type { Student } from '@prisma/client'
 import { SessionWithGroup } from '@/types/schedule'
 
 interface NoteFormModalProps {
