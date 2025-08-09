@@ -72,6 +72,7 @@ model StudentGoal {
   goalId    Int
   status    String
   notes     String?
+  goalData  NoteGoalData[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -106,7 +107,24 @@ model Note {
   student   Student  @relation(fields: [studentId], references: [id])
   studentId Int
   text      String
+  location  String?
+  activity  String?
+  prompting String?
+  comments  String?
+  goalData  NoteGoalData[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model NoteGoalData {
+  id            Int         @id @default(autoincrement())
+  note          Note        @relation(fields: [noteId], references: [id])
+  noteId        Int
+  studentGoal   StudentGoal @relation(fields: [studentGoalId], references: [id])
+  studentGoalId Int
+  accuracy      Int
+  trials        Int
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 }
 
