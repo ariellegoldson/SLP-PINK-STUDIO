@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "ts-node prisma/seed.ts",
+    "prisma:seed": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' ts-node prisma/seed.ts",
     "test": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' node -r ts-node/register tests/template.test.ts"
   },
   "dependencies": {

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { Student, Teacher, Classroom } from '@prisma/client'
 import prisma from '@/lib/prisma'
 import { getUpcomingSessionsForStudents } from '@/lib/sessions'
 
@@ -12,20 +13,21 @@ export async function GET(req: Request) {
     })
   }
   try {
-    const students = await prisma.student.findMany({
-      where: {
-        OR: [
-          { firstName: { contains: q, mode: 'insensitive' } },
-          { lastName: { contains: q, mode: 'insensitive' } },
-        ],
-      },
-      include: {
-        teacher: true,
-        classroom: true,
-      },
-      orderBy: { firstName: 'asc' },
-      take: 10,
-    })
+    const students: (Student & { teacher: Teacher; classroom: Classroom })[] =
+      await prisma.student.findMany({
+        where: {
+          OR: [
+            { firstName: { contains: q } },
+            { lastName: { contains: q } },
+          ],
+        },
+        include: {
+          teacher: true,
+          classroom: true,
+        },
+        orderBy: { firstName: 'asc' },
+        take: 10,
+      })
     const sessionsMap = await getUpcomingSessionsForStudents(
       students.map((s) => s.id),
     )
