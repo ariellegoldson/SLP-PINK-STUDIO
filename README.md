@@ -49,6 +49,15 @@ npm test
 - **S** – Save note
 - **⌘K / Ctrl+K** – Quick search
 
+## QA Notes
+
+- Initialize the database with `npx prisma db push` or POST to `/api/admin/init-db`.
+- Create a session by clicking a 10:00 slot and confirm default time 10:00–10:30.
+- Attempt to save a session without times – the client blocks save and the server returns `400`.
+- Mark a session seen only when valid times are present.
+- Drag and drop a session to reschedule and verify the time persists.
+- Keyboard shortcuts: **N** for new session, **S** to save note, **⌘K / Ctrl+K** for search.
+
 ## School Closure CSV Format
 
 Upload CSV files with the following columns:

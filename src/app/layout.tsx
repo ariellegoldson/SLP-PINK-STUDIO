@@ -2,42 +2,45 @@ import './globals.css'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import QuickStudentSearch from '@/components/QuickStudentSearch'
+import Button from '@/components/ui/Button'
 
 export const metadata = {
   title: 'SLP Pink Studio',
-  description: 'School-based speech-language pathologist dashboard'
+  description: 'School-based speech-language pathologist dashboard',
 }
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <body className="flex min-h-screen bg-gray-50">
-        <nav className="w-64 rounded-r-md bg-primary p-4 text-white">
-          <h1 className="mb-8 text-2xl font-semibold">SLP Pink Studio</h1>
-          <ul className="space-y-2">
-            <li>
-              <Link href="/" className="block rounded-md px-4 py-2 hover:bg-white/20">Dashboard</Link>
-            </li>
-            <li>
-              <Link href="/students" className="block rounded-md px-4 py-2 hover:bg-white/20">Students</Link>
-            </li>
-            <li>
-              <Link href="/schedule" className="block rounded-md px-4 py-2 hover:bg-white/20">Schedule</Link>
-            </li>
-            <li>
-              <Link href="/reports" className="block rounded-md px-4 py-2 hover:bg-white/20">Reports</Link>
-            </li>
-            <li>
-              <Link href="/settings" className="block rounded-md px-4 py-2 hover:bg-white/20">Settings</Link>
-            </li>
-          </ul>
-        </nav>
-        <div className="flex flex-1 flex-col p-8">
-          <header className="mb-4 flex justify-end">
+      <body className="min-h-screen">
+        <header className="bg-pink shadow-sm">
+          <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-2">
+            <h1 className="text-xl font-semibold">SLP Pink Studio</h1>
+            <nav className="flex gap-4 text-sm">
+              <Link href="/" className="hover:text-pink-600">
+                Dashboard
+              </Link>
+              <Link href="/students" className="hover:text-pink-600">
+                Students
+              </Link>
+              <Link href="/schedule" className="hover:text-pink-600">
+                Schedule
+              </Link>
+              <Link href="/reports" className="hover:text-pink-600">
+                Reports
+              </Link>
+              <Link href="/settings" className="hover:text-pink-600">
+                Settings
+              </Link>
+            </nav>
+            <div className="flex-1" />
             <QuickStudentSearch />
-          </header>
-          <main className="flex-1">{children}</main>
-        </div>
+            <Link href="/schedule" className="ml-4">
+              <Button>New Session</Button>
+            </Link>
+          </div>
+        </header>
+        <main className="mx-auto max-w-7xl p-4 fade-up">{children}</main>
       </body>
     </html>
   )
