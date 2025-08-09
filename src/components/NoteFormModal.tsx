@@ -2,6 +2,7 @@
 
 import { Dialog, Transition } from '@headlessui/react'
 import { Fragment, useState, useEffect } from 'react'
+import Button from './ui/Button'
 import { generateNoteParagraph, GoalPerformance } from '../lib/generateNoteParagraph'
 
 interface StudentGoal {
@@ -120,7 +121,7 @@ export default function NoteFormModal({ isOpen, onClose, sessionId, studentId, s
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-lg transform rounded-md bg-white p-6 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-lg transform rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
                 <Dialog.Title className="text-lg font-medium text-gray-900 mb-4">Session Note</Dialog.Title>
                 <div className="space-y-4">
                   <div>
@@ -163,7 +164,7 @@ export default function NoteFormModal({ isOpen, onClose, sessionId, studentId, s
                   </div>
                   <div className="space-y-2">
                     {goals.map(g => (
-                      <div key={g.id} className="rounded-md bg-primary/20 p-2">
+                      <div key={g.id} className="rounded-2xl bg-primary/20 p-2">
                         <p className="text-sm font-medium">{g.goal.description}</p>
                         <div className="mt-1 flex space-x-2">
                           <input
@@ -199,7 +200,9 @@ export default function NoteFormModal({ isOpen, onClose, sessionId, studentId, s
                     <textarea value={comments} onChange={e => setComments(e.target.value)} className="mt-1 w-full rounded-md border-gray-300 focus:border-primary focus:ring-primary" />
                   </div>
                   <div>
-                    <button type="button" onClick={handleGenerate} className="rounded-md bg-primary px-4 py-2 text-white">Generate</button>
+                    <Button type="button" onClick={handleGenerate}>
+                      Generate
+                    </Button>
                   </div>
                   {noteText && (
                     <div>
@@ -209,8 +212,12 @@ export default function NoteFormModal({ isOpen, onClose, sessionId, studentId, s
                   )}
                 </div>
                 <div className="mt-6 flex justify-end space-x-2">
-                  <button type="button" className="rounded-md bg-gray-200 px-4 py-2" onClick={onClose}>Cancel</button>
-                  <button type="button" className="rounded-md bg-primary px-4 py-2 text-white" onClick={handleSave}>Save</button>
+                  <Button type="button" variant="secondary" onClick={onClose}>
+                    Cancel
+                  </Button>
+                  <Button type="button" onClick={handleSave}>
+                    Save
+                  </Button>
                 </div>
               </Dialog.Panel>
             </Transition.Child>
