@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import type { Teacher, Classroom, Student } from '@prisma/client'
-import { saveSession } from '@/app/schedule/actions'
 import { SessionWithGroup, SessionStatus, SESSION_STATUSES } from '@/types/schedule'
 
 interface Props {
@@ -43,6 +42,7 @@ export default function SessionModal({
       : times[times.indexOf(initialTime) + 1] || initialTime
   )
   const [location, setLocation] = useState(session?.location || '')
+  const [activity, setActivity] = useState(session?.activity || '')
   const [teacherId, setTeacherId] = useState<number | undefined>(
     session?.group?.students[0]?.teacherId
   )
@@ -57,6 +57,7 @@ export default function SessionModal({
   const [groupName, setGroupName] = useState(session?.group?.name || '')
   const [status, setStatus] = useState<SessionStatus>(session?.status || 'UPCOMING')
   const [saving, setSaving] = useState(false)
+  const [applyAll, setApplyAll] = useState(session?.group ? true : false)
 
   useEffect(() => {
     async function loadClassrooms() {
@@ -89,16 +90,39 @@ export default function SessionModal({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
-    const saved = await saveSession({
-      id: session?.id,
-      date,
-      startTime,
-      endTime,
-      location,
-      studentIds: selected,
-      groupName,
-      status,
-    })
+    let res
+    if (session) {
+      res = await fetch(`/api/sessions/${session.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date,
+          startTime,
+          endTime,
+          location,
+          activity,
+          status,
+          applyToAll: applyAll,
+        }),
+      })
+    } else {
+      res = await fetch('/api/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date,
+          startTime,
+          endTime,
+          location,
+          activity,
+          studentIds: selected,
+          groupName,
+          status,
+        }),
+      })
+    }
+    const saved = await res.json()
+    setSaving(false)
     onSave(saved)
   }
 
@@ -128,6 +152,26 @@ export default function SessionModal({
         <h2 className="mb-2 text-lg font-semibold text-pink-800">
           {session ? 'Edit Session' : 'New Session'}
         </h2>
+        {session?.group && (
+          <div className="mb-2 rounded bg-pink-100 p-2">
+            <p className="text-sm font-medium text-pink-800">Group Session</p>
+            <ul className="ml-4 list-disc text-sm text-pink-800">
+              {session.group.students.map((s) => (
+                <li key={s.id}>
+                  {s.firstName} {s.lastName}
+                </li>
+              ))}
+            </ul>
+            <label className="mt-2 flex items-center gap-2 text-sm text-pink-800">
+              <input
+                type="checkbox"
+                checked={applyAll}
+                onChange={(e) => setApplyAll(e.target.checked)}
+              />
+              Apply changes to all in group
+            </label>
+          </div>
+        )}
         <div className="mb-2">
           <label className="block text-sm text-pink-800">Date</label>
           <input
@@ -177,51 +221,64 @@ export default function SessionModal({
           </select>
         </div>
         <div className="mb-2">
-          <label className="block text-sm text-pink-800">Teacher</label>
-          <select
+          <label className="block text-sm text-pink-800">Activity</label>
+          <input
+            type="text"
             className="mt-1 w-full rounded border-pink-300 bg-pink-100 p-1"
-            value={teacherId ?? ''}
-            onChange={(e) => handleTeacherChange(Number(e.target.value))}
-          >
-            <option value="">Select</option>
-            {teachers.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
+            value={activity}
+            onChange={(e) => setActivity(e.target.value)}
+          />
         </div>
-        <div className="mb-2">
-          <label className="block text-sm text-pink-800">Classroom</label>
-          <select
-            className="mt-1 w-full rounded border-pink-300 bg-pink-100 p-1"
-            value={classroomId ?? ''}
-            onChange={(e) => handleClassroomChange(Number(e.target.value))}
-            disabled={!teacherId}
-          >
-            <option value="">Select</option>
-            {classrooms.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="mb-2">
-          <label className="block text-sm text-pink-800">Students</label>
-          <div className="mt-1 max-h-24 overflow-y-auto rounded border border-pink-300 bg-pink-100 p-1">
-            {students.map((s) => (
-              <label key={s.id} className="flex items-center gap-1 text-sm">
-                <input
-                  type="checkbox"
-                  checked={selected.includes(s.id)}
-                  onChange={() => toggle(s.id)}
-                />
-                {s.firstName} {s.lastName}
-              </label>
-            ))}
-          </div>
-        </div>
+        {!session && (
+          <>
+            <div className="mb-2">
+              <label className="block text-sm text-pink-800">Teacher</label>
+              <select
+                className="mt-1 w-full rounded border-pink-300 bg-pink-100 p-1"
+                value={teacherId ?? ''}
+                onChange={(e) => handleTeacherChange(Number(e.target.value))}
+              >
+                <option value="">Select</option>
+                {teachers.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-2">
+              <label className="block text-sm text-pink-800">Classroom</label>
+              <select
+                className="mt-1 w-full rounded border-pink-300 bg-pink-100 p-1"
+                value={classroomId ?? ''}
+                onChange={(e) => handleClassroomChange(Number(e.target.value))}
+                disabled={!teacherId}
+              >
+                <option value="">Select</option>
+                {classrooms.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-2">
+              <label className="block text-sm text-pink-800">Students</label>
+              <div className="mt-1 max-h-24 overflow-y-auto rounded border border-pink-300 bg-pink-100 p-1">
+                {students.map((s) => (
+                  <label key={s.id} className="flex items-center gap-1 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={selected.includes(s.id)}
+                      onChange={() => toggle(s.id)}
+                    />
+                    {s.firstName} {s.lastName}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
         <div className="mb-2">
           <label className="block text-sm text-pink-800">Group Name (optional)</label>
           <input
