@@ -15,6 +15,7 @@ model Teacher {
   name       String
   classrooms Classroom[]
   students   Student[]
+  sessionTemplates SessionTemplate[]
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 }
@@ -25,6 +26,7 @@ model Classroom {
   teacher   Teacher   @relation(fields: [teacherId], references: [id])
   teacherId Int
   students  Student[]
+  sessionTemplates SessionTemplate[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }
@@ -42,6 +44,7 @@ model Student {
   goals       StudentGoal[]
   notes       Note[]
   groups      Group[]   @relation("GroupStudents")
+  sessionTemplates SessionTemplateStudent[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -127,5 +130,29 @@ model NoteGoalData {
   trials        Int
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+}
+
+model SessionTemplate {
+  id                  Int                      @id @default(autoincrement())
+  name                String
+  teacher             Teacher?                 @relation(fields: [teacherId], references: [id])
+  teacherId           Int?
+  classroom           Classroom?               @relation(fields: [classroomId], references: [id])
+  classroomId         Int?
+  location            String
+  durationMinutes     Int
+  defaultActivity     String?
+  defaultPromptingType String?
+  students            SessionTemplateStudent[]
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+}
+
+model SessionTemplateStudent {
+  id                Int             @id @default(autoincrement())
+  sessionTemplate   SessionTemplate @relation(fields: [sessionTemplateId], references: [id])
+  sessionTemplateId Int
+  student           Student         @relation(fields: [studentId], references: [id])
+  studentId         Int
 }
 
