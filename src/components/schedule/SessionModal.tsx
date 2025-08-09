@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { Teacher, Classroom, Student } from '@prisma/client'
+import NoteFormModal from '../notes/NoteFormModal'
 import { SessionWithGroup, SessionStatus, SESSION_STATUSES } from '@/types/schedule'
 
 interface Props {
@@ -58,6 +59,7 @@ export default function SessionModal({
   const [status, setStatus] = useState<SessionStatus>(session?.status || 'UPCOMING')
   const [saving, setSaving] = useState(false)
   const [applyAll, setApplyAll] = useState(session?.group ? true : false)
+  const [noteIndex, setNoteIndex] = useState<number | null>(null)
 
   useEffect(() => {
     async function loadClassrooms() {
@@ -143,15 +145,48 @@ export default function SessionModal({
     setSelected([])
   }
 
+  async function markAllSeen() {
+    if (!session?.groupId || !session.group) return
+    const res = await fetch(`/api/groups/${session.groupId}/mark-seen`, {
+      method: 'POST',
+    })
+    const updated: SessionWithGroup[] = await res.json()
+    updated.forEach(onSave)
+    setNoteIndex(0)
+  }
+
+  function advanceNote() {
+    if (!session?.group) return
+    const next = (noteIndex ?? 0) + 1
+    if (next < session.group.students.length) {
+      setNoteIndex(next)
+    } else {
+      setNoteIndex(null)
+      onClose()
+    }
+  }
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
-      <form
-        onSubmit={handleSubmit}
-        className="w-80 rounded-lg bg-pink-50 p-4 shadow-lg"
-      >
-        <h2 className="mb-2 text-lg font-semibold text-pink-800">
-          {session ? 'Edit Session' : 'New Session'}
-        </h2>
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+        <form
+          onSubmit={handleSubmit}
+          className="w-80 rounded-lg bg-pink-50 p-4 shadow-lg"
+        >
+          <h2 className="mb-2 text-lg font-semibold text-pink-800">
+            {session ? 'Edit Session' : 'New Session'}
+          </h2>
+          {session?.groupId && (
+            <div className="mb-2">
+              <button
+                type="button"
+                onClick={markAllSeen}
+                className="rounded bg-pink-400 px-2 py-1 text-white"
+              >
+                Mark All Seen
+              </button>
+            </div>
+          )}
         {session?.group && (
           <div className="mb-2 rounded bg-pink-100 p-2">
             <p className="text-sm font-medium text-pink-800">Group Session</p>
@@ -302,23 +337,34 @@ export default function SessionModal({
             ))}
           </select>
         </div>
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            className="rounded bg-pink-200 px-3 py-1 text-pink-900"
-            onClick={onClose}
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded bg-pink-500 px-3 py-1 text-white disabled:opacity-50"
-          >
-            Save
-          </button>
-        </div>
-      </form>
-    </div>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              className="rounded bg-pink-200 px-3 py-1 text-pink-900"
+              onClick={onClose}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="rounded bg-pink-500 px-3 py-1 text-white disabled:opacity-50"
+            >
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
+      {noteIndex !== null && session?.group && (
+        <NoteFormModal
+          student={session.group.students[noteIndex]}
+          session={session}
+          open
+          onSave={advanceNote}
+          onSkip={advanceNote}
+          progress={{ current: noteIndex + 1, total: session.group.students.length }}
+        />
+      )}
+    </>
   )
 }
