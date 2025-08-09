@@ -1,12 +1,17 @@
 'use client'
 
 import { Dialog, Transition } from '@headlessui/react'
-import { Fragment, useState } from 'react'
+import { Fragment, useState, useEffect } from 'react'
 import { generateNoteParagraph, GoalPerformance } from '../lib/generateNoteParagraph'
 
 interface StudentGoal {
   id: number
-  goal: { description: string }
+  goal: { description: string; targetAreaId: number }
+}
+
+interface TargetArea {
+  id: number
+  name: string
 }
 
 interface NoteFormModalProps {
@@ -15,16 +20,41 @@ interface NoteFormModalProps {
   sessionId: number
   studentId: number
   studentName: string
-  goals: StudentGoal[]
 }
 
-export default function NoteFormModal({ isOpen, onClose, sessionId, studentId, studentName, goals }: NoteFormModalProps) {
+export default function NoteFormModal({ isOpen, onClose, sessionId, studentId, studentName }: NoteFormModalProps) {
   const [location, setLocation] = useState('')
   const [activity, setActivity] = useState('')
   const [prompting, setPrompting] = useState('none')
   const [goalData, setGoalData] = useState<Record<number, { accuracy: number; trials: number }>>({})
   const [comments, setComments] = useState('')
   const [noteText, setNoteText] = useState('')
+  const [targetAreas, setTargetAreas] = useState<TargetArea[]>([])
+  const [targetAreaId, setTargetAreaId] = useState<'all' | number>('all')
+  const [goals, setGoals] = useState<StudentGoal[]>([])
+
+  useEffect(() => {
+    async function loadAreas() {
+      const res = await fetch('/api/target-areas')
+      const data = await res.json()
+      setTargetAreas(data)
+    }
+    loadAreas()
+  }, [])
+
+  useEffect(() => {
+    async function loadGoals() {
+      const params = new URLSearchParams({ studentId: String(studentId) })
+      if (targetAreaId !== 'all') params.append('targetAreaId', String(targetAreaId))
+      const res = await fetch(`/api/goals?${params.toString()}`)
+      const data = await res.json()
+      setGoals(data)
+      setGoalData({})
+    }
+    if (isOpen) {
+      loadGoals()
+    }
+  }, [isOpen, studentId, targetAreaId])
 
   const handleGenerate = () => {
     const goalPerf: GoalPerformance[] = goals.map(g => ({
@@ -116,6 +146,21 @@ export default function NoteFormModal({ isOpen, onClose, sessionId, studentId, s
                       <option value="none">None</option>
                     </select>
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Target Area</label>
+                    <select
+                      value={targetAreaId}
+                      onChange={e => setTargetAreaId(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                      className="mt-1 w-full rounded-md border-gray-300 focus:border-primary focus:ring-primary"
+                    >
+                      <option value="all">All</option>
+                      {targetAreas.map(t => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="space-y-2">
                     {goals.map(g => (
                       <div key={g.id} className="rounded-md bg-primary/20 p-2">
@@ -126,14 +171,24 @@ export default function NoteFormModal({ isOpen, onClose, sessionId, studentId, s
                             placeholder="Accuracy %"
                             className="w-1/2 rounded-md border-gray-300 focus:border-primary focus:ring-primary"
                             value={goalData[g.id]?.accuracy ?? ''}
-                            onChange={e => setGoalData(prev => ({ ...prev, [g.id]: { ...prev[g.id], accuracy: Number(e.target.value) } }))}
+                            onChange={e =>
+                              setGoalData(prev => ({
+                                ...prev,
+                                [g.id]: { ...prev[g.id], accuracy: Number(e.target.value) },
+                              }))
+                            }
                           />
                           <input
                             type="number"
                             placeholder="Trials"
                             className="w-1/2 rounded-md border-gray-300 focus:border-primary focus:ring-primary"
                             value={goalData[g.id]?.trials ?? ''}
-                            onChange={e => setGoalData(prev => ({ ...prev, [g.id]: { ...prev[g.id], trials: Number(e.target.value) } }))}
+                            onChange={e =>
+                              setGoalData(prev => ({
+                                ...prev,
+                                [g.id]: { ...prev[g.id], trials: Number(e.target.value) },
+                              }))
+                            }
                           />
                         </div>
                       </div>
