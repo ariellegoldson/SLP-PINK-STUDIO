@@ -92,6 +92,7 @@ model Session {
   startTime DateTime
   endTime   DateTime
   location  String
+  activity  String?
   group     Group?   @relation(fields: [groupId], references: [id])
   groupId   Int?
   notes     Note[]
